@@ -41,7 +41,7 @@ val scalacOpts = Def.setting[Seq[String]] {
   )
 
   if (sv == "3") {
-    common
+    common ++ Seq("-Xtarget:11")
   } else {
     common ++ Seq("-release", "11", "-Ywarn-unused:imports", "-Xlint:nullary-unit", "-Xlint", "-Ywarn-dead-code")
   }
@@ -313,7 +313,16 @@ lazy val `play-ahc-ws-standalone` = project
   .in(file("play-ahc-ws-standalone"))
   .settings(
     commonSettings ++ shadedAhcSettings ++ shadedOAuthSettings ++ Seq(
-      Test / fork        := true,
+      Test / fork := true,
+      Test / sources := {
+        if (scalaBinaryVersion.value == "3") {
+          // TODO akka-http for Scala 3
+          // https://github.com/akka/akka-http/issues/3891
+          Nil
+        } else {
+          (Test / sources).value
+        }
+      },
       Test / testOptions := Seq(Tests.Argument(TestFrameworks.JUnit, "-a", "-v")),
       libraryDependencies ++= standaloneAhcWSDependencies,
       // This will not work if you do a publishLocal, because that uses ivy...
