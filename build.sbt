@@ -12,16 +12,6 @@ import sbtassembly.MergeStrategy
 // Shading and Project Settings
 //---------------------------------------------------------------
 
-// Customise sbt-dynver's behaviour to make it work with tags which aren't v-prefixed
-ThisBuild / dynverVTagPrefix := false
-
-// Sanity-check: assert that version comes from a tag (e.g. not a too-shallow clone)
-// https://github.com/dwijnand/sbt-dynver/#sanity-checking-the-version
-Global / onLoad := (Global / onLoad).value.andThen { s =>
-  dynverAssertTagVersion.value
-  s
-}
-
 val javacSettings = Seq(
   "--release",
   "11",
@@ -49,12 +39,7 @@ val scalacOpts = Def.setting[Seq[String]] {
 
 lazy val mimaSettings = Seq(
   mimaPreviousArtifacts := {
-    if (scalaBinaryVersion.value == "3") Set.empty[ModuleID]
-    else
-      Set(
-        organization.value %% name.value % previousStableVersion.value
-          .getOrElse(throw new Error("Unable to determine previous version"))
-      )
+    Set.empty[ModuleID]
   },
   // these exclusions are only for main branch and are targeting 2.2.x
   mimaBinaryIssueFilters ++= Seq(
@@ -103,6 +88,10 @@ lazy val commonSettings = Def.settings(
     }
   },
   scalacOptions ++= scalacOpts.value,
+  version := "2.2.0-M2_lila-1",
+  publishTo := Option(
+    Resolver.file("file", new File(sys.props.getOrElse("publishTo", "")))
+  ),
   Compile / doc / scalacOptions ++= Seq(
     "-Xfatal-warnings",
     // Work around 2.12+ bug which prevents javadoc in nested java classes from compiling.
